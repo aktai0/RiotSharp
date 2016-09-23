@@ -1,13 +1,12 @@
-﻿using System;
+﻿using Newtonsoft.Json;
 using System.Collections.Generic;
-using Newtonsoft.Json;
+using RiotSharp.LeagueEndpoint.Enums;
 
 namespace RiotSharp.LeagueEndpoint
 {
     /// <summary>
     /// Class representing a League in the API.
     /// </summary>
-    [Serializable]
     public class League
     {
         internal League() { }
@@ -38,14 +37,12 @@ namespace RiotSharp.LeagueEndpoint
         /// League queue (eg: RankedSolo5x5).
         /// </summary>
         [JsonProperty("queue")]
-        [JsonConverter(typeof(QueueConverter))]
         public Queue Queue { get; set; }
 
         /// <summary>
         /// League tier (eg: Challenger).
         /// </summary>
         [JsonProperty("tier")]
-        [JsonConverter(typeof(TierConverter))]
         public Tier Tier { get; set; }
     }
 }

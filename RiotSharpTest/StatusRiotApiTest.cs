@@ -1,7 +1,6 @@
-﻿using System.Linq;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using RiotSharp;
+using System.Linq;
 
 namespace RiotSharpTest
 {
@@ -38,7 +37,7 @@ namespace RiotSharpTest
             var shardStatus = api.GetShardStatus(region);
 
             Assert.IsNotNull(shardStatus);
-            Assert.AreEqual(region, shardStatus.Slug);
+            Assert.AreEqual(region.ToString(), shardStatus.Slug.ToString());
         }
 
         [TestMethod]
@@ -48,7 +47,7 @@ namespace RiotSharpTest
             var shardStatus = api.GetShardStatusAsync(region);
 
             Assert.IsNotNull(shardStatus.Result);
-            Assert.AreEqual(region, shardStatus.Result.Slug);
+            Assert.AreEqual(region.ToString(), shardStatus.Result.Slug.ToString());
         }
     }
 }

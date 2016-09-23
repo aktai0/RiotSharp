@@ -1,13 +1,12 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
-using Newtonsoft.Json;
 
 namespace RiotSharp.StatusEndpoint
 {
     /// <summary>
     /// Class representing messages for an incident (Status API).
     /// </summary>
-    [Serializable]
     public class Message
     {
         internal Message() { }
@@ -35,7 +34,7 @@ namespace RiotSharp.StatusEndpoint
         /// Id of the message.
         /// </summary>
         [JsonProperty("id")]
-        public long Id { get; set; }
+        public string Id { get; set; }
 
         /// <summary>
         /// Severity of the messaage.

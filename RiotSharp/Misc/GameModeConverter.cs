@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Reflection;
 
 namespace RiotSharp
 {
@@ -8,7 +9,7 @@ namespace RiotSharp
     {
         public override bool CanConvert(Type objectType)
         {
-            return typeof(string).IsAssignableFrom(objectType);
+            return typeof(string).GetTypeInfo().IsAssignableFrom(objectType.GetTypeInfo());
         }
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue,
@@ -37,6 +38,8 @@ namespace RiotSharp
                     return GameMode.Intro;
                 case "KINGPORO":
                     return GameMode.KingPoro;
+                case "SIEGE":
+                    return GameMode.Siege;
                 default:
                     return null;
             }
@@ -74,6 +77,9 @@ namespace RiotSharp
                     break;
                 case GameMode.KingPoro:
                     result = "KINGPORO";
+                    break;
+                case GameMode.Siege:
+                    result = "SIEGE";
                     break;
                 default:
                     result = string.Empty;

@@ -6,14 +6,13 @@ using RiotSharp.LeagueEndpoint;
 using RiotSharp.MatchEndpoint;
 using RiotSharp.StatsEndpoint;
 using RiotSharp.SummonerEndpoint;
-using System;
+using RiotSharp.ChampionMasteryEndpoint;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace RiotSharp
 {
+    #pragma warning disable 1591
     public interface IRiotApi
     {
         Summoner GetSummoner(Region region, int summonerId);
@@ -54,12 +53,6 @@ namespace RiotSharp
         Task<Dictionary<string, TeamEndpoint.Team>> GetTeamsAsync(Region region, List<string> teamIds);
         MatchDetail GetMatch(Region region, long matchId, bool includeTimeline = false);
         Task<MatchDetail> GetMatchAsync(Region region, long matchId, bool includeTimeline = false);
-        List<MatchSummary> GetMatchHistory(Region region, long summonerId,
-            int beginIndex = 0, int endIndex = 14,
-            List<int> championIds = null, List<Queue> rankedQueues = null);
-        Task<List<MatchSummary>> GetMatchHistoryAsync(Region region, long summonerId,
-            int beginIndex = 0, int endIndex = 14,
-            List<int> championIds = null, List<Queue> rankedQueues = null);
         List<PlayerStatsSummary> GetStatsSummaries(Region region, long summonerId);
         Task<List<PlayerStatsSummary>> GetStatsSummariesAsync(Region region, long summonerId);
         List<PlayerStatsSummary> GetStatsSummaries(Region region, long summonerId, StatsEndpoint.Season season);
@@ -76,5 +69,14 @@ namespace RiotSharp
         Task<CurrentGame> GetCurrentGameAsync(Platform platform, long summonerId);
         FeaturedGames GetFeaturedGames(Region region);
         Task<FeaturedGames> GetFeaturedGamesAsync(Region region);
+        ChampionMastery GetChampionMastery(Platform platform, long summonerId, long championId);
+        Task<ChampionMastery> GetChampionMasteryAsync(Platform platform, long summonerId, long championId);
+        List<ChampionMastery> GetAllChampionsMasteryEntries(Platform platform, long summonerId);
+        Task<List<ChampionMastery>> GetAllChampionsMasteryEntriesAsync(Platform platform, long summonerId);
+        int GetTotalChampionMasteryScore(Platform platform, long summonerId);
+        Task<int> GetTotalChampionMasteryScoreAsync(Platform platform, long summonerId);
+        List<ChampionMastery> GetTopChampionsMasteryEntries(Platform platform, long summonerId, int count);
+        Task<List<ChampionMastery>> GetTopChampionsMasteryEntriesAsync(Platform platform, long summonerId, int count);
     }
+    #pragma warning restore 1591
 }

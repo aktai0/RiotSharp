@@ -1,13 +1,13 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using RiotSharp.StaticDataEndpoint.Champion.Enums;
+using RiotSharp.StaticDataEndpoint.Champion.Enums.Converters;
 using System.Collections.Generic;
-using Newtonsoft.Json;
 
 namespace RiotSharp.StaticDataEndpoint
 {
     /// <summary>
     /// Class representing a champion (Static API).
     /// </summary>
-    [Serializable]
     public class ChampionStatic
     {
         internal ChampionStatic() { }
@@ -74,7 +74,6 @@ namespace RiotSharp.StaticDataEndpoint
         /// Wind).
         /// </summary>
         [JsonProperty("partype")]
-        [JsonConverter(typeof(ParTypeStaticConverter))]
         public ParTypeStatic Partype { get; set; }
 
         /// <summary>
@@ -111,7 +110,7 @@ namespace RiotSharp.StaticDataEndpoint
         /// List of tags for this champion (Mage, Assassin, Tank, Support, etc).
         /// </summary>
         [JsonProperty("tags")]
-        [JsonConverter(typeof(TagStaticConverter))]
+        [JsonConverter(typeof(TagStaticListConverter))]
         public List<TagStatic> Tags { get; set; }
 
         /// <summary>

@@ -1,8 +1,11 @@
-﻿namespace RiotSharp
+﻿using Newtonsoft.Json;
+
+namespace RiotSharp
 {
     /// <summary>
     /// Region for the API.
     /// </summary>
+    [JsonConverter(typeof(RegionConverter))]
     public enum Region
     {
         /// <summary>
@@ -53,6 +56,11 @@
         /// <summary>
         /// Turkey.
         /// </summary>
-        tr
+        tr,
+
+        /// <summary>
+        /// Global.
+        /// </summary>
+        global
     }
 }

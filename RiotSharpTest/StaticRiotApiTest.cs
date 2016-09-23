@@ -1,9 +1,8 @@
-﻿using System.Linq;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Configuration;
-
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using RiotSharp;
 using RiotSharp.StaticDataEndpoint;
+using System.Configuration;
+using System.Linq;
 
 namespace RiotSharpTest
 {
@@ -167,18 +166,18 @@ namespace RiotSharpTest
         [TestCategory("StaticRiotApi")]
         public void GetMastery_Test()
         {
-            var mastery = api.GetMastery(Region.euw, 4111, MasteryData.all);
+            var mastery = api.GetMastery(Region.euw, 6111, MasteryData.all);
 
-            Assert.AreEqual(mastery.Name, "Double-Edged Sword");
+            Assert.AreEqual(mastery.Name, "Fury");
         }
 
         [TestMethod]
         [TestCategory("StaticRiotApi"), TestCategory("Async")]
         public void GetMasteryAsync_Test()
         {
-            var mastery = api.GetMasteryAsync(Region.euw, 4111, MasteryData.all);
+            var mastery = api.GetMasteryAsync(Region.euw, 6111, MasteryData.all);
 
-            Assert.AreEqual(mastery.Result.Name, "Double-Edged Sword");
+            Assert.AreEqual(mastery.Result.Name, "Fury");
         }
 
         [TestMethod]
@@ -288,7 +287,7 @@ namespace RiotSharpTest
 
         [TestMethod]
         [TestCategory("StaticRiotApi"), TestCategory("Async")]
-        public void GetRealAsync_Test()
+        public void GetRealmAsync_Test()
         {
             var realm = api.GetRealmAsync(Region.euw);
 

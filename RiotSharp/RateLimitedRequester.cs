@@ -1,35 +1,36 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net;
+using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace RiotSharp
 {
-    class RateLimitedRequester : Requester
+    internal class RateLimitedRequester : Requester
     {
-        private static RateLimitedRequester instance;
-        private RateLimitedRequester() { }
-        public static new RateLimitedRequester Instance
+        public int RateLimitPer10S { get; set; }
+        public int RateLimitPer10M { get; set; }
+
+        internal RateLimitedRequester(string apiKey, int rateLimitPer10s, int rateLimitPer10m)
         {
-            get { return instance ?? (instance = new RateLimitedRequester()); }
+            ApiKey = apiKey;
+            RateLimitPer10S = rateLimitPer10s;
+            RateLimitPer10M = rateLimitPer10m;
         }
 
-        public static int RateLimitPer10S { get; set; }
-        public static int RateLimitPer10M { get; set; }
+        private readonly Dictionary<Region, DateTime> firstRequestsInLastTenS = new Dictionary<Region, DateTime>();
+        private readonly Dictionary<Region, DateTime> firstRequestsInLastTenM = new Dictionary<Region, DateTime>();
+        private readonly Dictionary<Region, int> numberOfRequestsInLastTenS = new Dictionary<Region, int>();
+        private readonly Dictionary<Region, int> numberOfRequestsInLastTenM = new Dictionary<Region, int>();
 
-        private Dictionary<Region, DateTime> firstRequestsInLastTenS = new Dictionary<Region, DateTime>();
-        private Dictionary<Region, DateTime> firstRequestsInLastTenM = new Dictionary<Region, DateTime>();
-        private Dictionary<Region, int> numberOfRequestsInLastTenS = new Dictionary<Region, int>();
-        private Dictionary<Region, int> numberOfRequestsInLastTenM = new Dictionary<Region, int>();
+        private readonly SemaphoreSlim semaphore = new SemaphoreSlim(1);
 
-        private SemaphoreSlim semaphore = new SemaphoreSlim(1);
-
-        public string CreateRequest(string relativeUrl, Region region, List<string> addedArguments = null,
+        public string CreateGetRequest(string relativeUrl, Region region, List<string> addedArguments = null,
             bool useHttps = true)
         {
             rootDomain = region + ".api.pvp.net";
-            HttpWebRequest request = PrepareRequest(relativeUrl, addedArguments, useHttps);
+            var request = PrepareRequest(relativeUrl, addedArguments, useHttps, HttpMethod.Get);
 
             semaphore.Wait();
             {
@@ -37,14 +38,15 @@ namespace RiotSharp
             }
             semaphore.Release();
 
-            return GetResponse(request);
+            return GetResult(request);
         }
 
-        public async Task<string> CreateRequestAsync(string relativeUrl, Region region,
+
+        public async Task<string> CreateGetRequestAsync(string relativeUrl, Region region,
             List<string> addedArguments = null, bool useHttps = true)
         {
             rootDomain = region + ".api.pvp.net";
-            HttpWebRequest request = PrepareRequest(relativeUrl, addedArguments, useHttps);
+            var request = PrepareRequest(relativeUrl, addedArguments, useHttps, HttpMethod.Get);
 
             await semaphore.WaitAsync();
             {
@@ -52,7 +54,72 @@ namespace RiotSharp
             }
             semaphore.Release();
 
-            return await GetResponseAsync(request);
+            return await GetResultAsync(request);
+        }
+
+        public string CreatePostRequest(string relativeUrl, Region region, string body,
+            List<string> addedArguments = null, bool useHttps = true)
+        {
+            rootDomain = region + ".api.pvp.net";
+            var request = PrepareRequest(relativeUrl, addedArguments, useHttps, HttpMethod.Post);
+            request.Content = new StringContent(body, Encoding.UTF8, "application/json");
+
+            semaphore.Wait();
+            {
+                HandleRateLimit(region);
+            }
+            semaphore.Release();
+            return Post(request);
+        }
+
+        public async Task<string> CreatePostRequestAsync(string relativeUrl, Region region, string body,
+            List<string> addedArguments = null, bool useHttps = true)
+        {
+            rootDomain = region + ".api.pvp.net";
+            var request = PrepareRequest(relativeUrl, addedArguments, useHttps, HttpMethod.Post);
+            request.Content = new StringContent(body, Encoding.UTF8, "application/json");
+
+            await semaphore.WaitAsync();
+            {
+                HandleRateLimit(region);
+            }
+            semaphore.Release();
+
+            return await PostAsync(request);
+        }
+
+        public bool CreatePutRequest(string relativeUrl, Region region, string body, List<string> addedArguments = null,
+            bool useHttps = true)
+        {
+            rootDomain = region + ".api.pvp.net";
+            var request = PrepareRequest(relativeUrl, addedArguments, useHttps, HttpMethod.Put);
+            request.Content = new StringContent(body, Encoding.UTF8, "application/json");
+
+            semaphore.Wait();
+            {
+                HandleRateLimit(region);
+            }
+            semaphore.Release();
+
+            var response = Put(request);
+            return (int)response.StatusCode >= 200 && (int)response.StatusCode < 300;
+        }
+
+        public async Task<bool> CreatePutRequestAsync(string relativeUrl, Region region, string body,
+            List<string> addedArguments = null, bool useHttps = true)
+        {
+            rootDomain = region + ".api.pvp.net";
+            var request = PrepareRequest(relativeUrl, addedArguments, useHttps, HttpMethod.Put);
+            request.Content = new StringContent(body, Encoding.UTF8, "application/json");
+
+            await semaphore.WaitAsync();
+            {
+                HandleRateLimit(region);
+            }
+            semaphore.Release();
+
+            var response = await PutAsync(request);
+            return (int)response.StatusCode >= 200 && (int)response.StatusCode < 300;
         }
 
         private void HandleRateLimit(Region region)

@@ -1,12 +1,11 @@
-﻿using System;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
+using RiotSharp.MatchEndpoint.Enums;
 
 namespace RiotSharp.MatchEndpoint
 {
     /// <summary>
     /// Class representing a participant's timeline (Match API).
     /// </summary>
-    [Serializable]
     public class ParticipantTimeline
     {
         internal ParticipantTimeline() { }
@@ -117,14 +116,12 @@ namespace RiotSharp.MatchEndpoint
         /// Participant's lane.
         /// </summary>
         [JsonProperty("lane")]
-        [JsonConverter(typeof(LaneConverter))]
         public Lane Lane { get; set; }
 
         /// <summary>
         /// Participant's role.
         /// </summary>
         [JsonProperty("role")]
-        [JsonConverter(typeof(RoleConverter))]
         public Role Role { get; set; }
 
         /// <summary>

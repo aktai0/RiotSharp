@@ -1,126 +1,152 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace RiotSharp
 {
     class Requester
     {
-        private static Requester instance;
-        protected Requester() { }
-        public static Requester Instance
+        protected string rootDomain;
+        private readonly HttpClient httpClient;
+        public string ApiKey { get; set; }
+
+        internal Requester(string apiKey = "")
         {
-            get { return instance ?? (instance = new Requester()); }
+            ApiKey = apiKey;
+            httpClient = new HttpClient();
         }
 
-        protected string rootDomain;
-        public static string ApiKey { get; set; }
-
-        public string CreateRequest(string relativeUrl, string rootDomain, List<string> addedArguments = null,
+        public string CreateGetRequest(string relativeUrl, string rootDomain, List<string> addedArguments = null,
             bool useHttps = true)
         {
             this.rootDomain = rootDomain;
-            var request = PrepareRequest(relativeUrl, addedArguments, useHttps);
-            return GetResponse(request);
+            var request = PrepareRequest(relativeUrl, addedArguments, useHttps, HttpMethod.Get);
+            return GetResult(request);
         }
 
-        public async Task<string> CreateRequestAsync(string relativeUrl, string rootDomain,
+        public async Task<string> CreateGetRequestAsync(string relativeUrl, string rootDomain,
             List<string> addedArguments = null, bool useHttps = true)
         {
             this.rootDomain = rootDomain;
-            var request = PrepareRequest(relativeUrl, addedArguments, useHttps);
-            return await GetResponseAsync(request);
+            var request = PrepareRequest(relativeUrl, addedArguments, useHttps, HttpMethod.Get);
+            return await GetResultAsync(request);
         }
 
-        protected HttpWebRequest PrepareRequest(string relativeUrl, List<string> addedArguments, bool useHttps)
+        protected HttpRequestMessage PrepareRequest(string relativeUrl, List<string> addedArguments,
+            bool useHttps, HttpMethod httpMethod)
         {
-            HttpWebRequest request;
-            string scheme = useHttps ? System.Uri.UriSchemeHttps : System.Uri.UriSchemeHttp;
-            if (addedArguments == null)
-            {
-                request = (HttpWebRequest)WebRequest.Create(string.Format("{0}://{1}{2}?api_key={3}"
-                    , scheme, rootDomain, relativeUrl, ApiKey));
-            }
-            else
-            {
-                request = (HttpWebRequest)WebRequest.Create(string.Format("{0}://{1}{2}?{3}api_key={4}"
-                    , scheme, rootDomain, relativeUrl, BuildArgumentsString(addedArguments), ApiKey));
-            }
-            request.Method = "GET";
+            var scheme = useHttps ? "https" : "http";
+            var url = addedArguments == null ?
+                string.Format("{0}://{1}{2}?api_key={3}", scheme, rootDomain, relativeUrl, ApiKey) :
+                string.Format("{0}://{1}{2}?{3}api_key={4}",
+                    scheme, rootDomain, relativeUrl, BuildArgumentsString(addedArguments), ApiKey);
 
-            return request;
+            return new HttpRequestMessage(httpMethod, url);
         }
 
-        protected string GetResponse(HttpWebRequest request)
+        protected string GetResult(HttpRequestMessage request)
         {
-            string result = string.Empty;
-            try
+            var result = string.Empty;
+            using (var response = httpClient.GetAsync(request.RequestUri).Result)
             {
-                var response = (HttpWebResponse)request.GetResponse();
-
-                using (var reader = new StreamReader(response.GetResponseStream()))
+                if (!response.IsSuccessStatusCode)
                 {
-                    result = reader.ReadToEnd();
+                    HandleRequestFailure(response.StatusCode);
                 }
-            }
-            catch (WebException ex)
-            {
-                HandleWebException(ex);
+                using (var content = response.Content)
+                {
+                    result = content.ReadAsStringAsync().Result;
+                }
             }
             return result;
         }
 
-        protected async Task<string> GetResponseAsync(HttpWebRequest request)
+        protected async Task<string> GetResultAsync(HttpRequestMessage request)
         {
-            string result = string.Empty;
-            try
+            var result = string.Empty;
+            using (var response = await httpClient.GetAsync(request.RequestUri))
             {
-                var response = (HttpWebResponse)(await request.GetResponseAsync());
-
-                using (var reader = new StreamReader(response.GetResponseStream()))
+                if (!response.IsSuccessStatusCode)
                 {
-                    result = await reader.ReadToEndAsync();
+                    HandleRequestFailure(response.StatusCode);
                 }
-            }
-            catch (WebException ex)
-            {
-                HandleWebException(ex);
+                using (var content = response.Content)
+                {
+                    result = await content.ReadAsStringAsync();
+                }
             }
             return result;
         }
+
+        protected HttpResponseMessage Put(HttpRequestMessage request)
+        {
+            var result = httpClient.PutAsync(request.RequestUri, request.Content).Result;
+            if (!result.IsSuccessStatusCode)
+            {
+                HandleRequestFailure(result.StatusCode);
+            }
+            return result;
+        }
+
+        protected async Task<HttpResponseMessage> PutAsync(HttpRequestMessage request)
+        {
+            var result = await httpClient.PutAsync(request.RequestUri, request.Content);
+            if (!result.IsSuccessStatusCode)
+            {
+                HandleRequestFailure(result.StatusCode);
+            }
+            return result;
+        }
+
+        protected string Post(HttpRequestMessage request)
+        {
+            var result = string.Empty;
+            using (var response = httpClient.PostAsync(request.RequestUri, request.Content).Result)
+            {
+                if (!response.IsSuccessStatusCode)
+                {
+                    HandleRequestFailure(response.StatusCode);
+                }
+                using (var content = response.Content)
+                {
+                    result = content.ReadAsStringAsync().Result;
+                }
+            }
+            return result;
+        }
+
+        protected async Task<string> PostAsync(HttpRequestMessage request)
+        {
+            var result = string.Empty;
+            using (var response = await httpClient.PostAsync(request.RequestUri, request.Content))
+            {
+                if (!response.IsSuccessStatusCode)
+                {
+                    HandleRequestFailure(response.StatusCode);
+                }
+                using (var content = response.Content)
+                {
+                    result = await content.ReadAsStringAsync();
+                }
+            }
+            return result;
+        }
+
+
 
         protected string BuildArgumentsString(List<string> arguments)
         {
-            string result = string.Empty;
-            foreach (string arg in arguments)
-            {
-                if (arg != string.Empty)
-                {
-                    result += arg + "&";
-                }
-            }
-            return result;
+            return arguments
+                .Where(arg => arg != string.Empty)
+                .Aggregate(string.Empty, (current, arg) => current + (arg + "&"));
         }
 
-        private void HandleWebException(WebException ex)
+        protected void HandleRequestFailure(HttpStatusCode statusCode)
         {
-            HttpWebResponse response;
-            try
-            {
-                response = (HttpWebResponse)ex.Response;
-            }
-            catch (System.NullReferenceException)
-            {
-                response = null;
-            }
-
-            if (response == null)
-            {
-                throw new RiotSharpException(ex.Message);
-            }
-
-            switch (response.StatusCode)
+            switch (statusCode)
             {
                 case HttpStatusCode.ServiceUnavailable:
                     throw new RiotSharpException("503, Service unavailable");
@@ -132,6 +158,8 @@ namespace RiotSharp
                     throw new RiotSharpException("400, Bad request");
                 case HttpStatusCode.NotFound:
                     throw new RiotSharpException("404, Resource not found");
+                case HttpStatusCode.Forbidden:
+                    throw new RiotSharpException("403, Forbidden");
             }
         }
     }

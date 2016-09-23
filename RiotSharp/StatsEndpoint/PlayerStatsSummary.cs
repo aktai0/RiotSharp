@@ -1,12 +1,12 @@
-﻿using System;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
+using RiotSharp.StatsEndpoint.Enums;
+using System;
 
 namespace RiotSharp.StatsEndpoint
 {
     /// <summary>
     /// Stats summary of a player (Stats API).
     /// </summary>
-    [Serializable]
     public class PlayerStatsSummary
     {
         internal PlayerStatsSummary() { }
@@ -34,7 +34,6 @@ namespace RiotSharp.StatsEndpoint
         /// Player stats summary type.
         /// </summary>
         [JsonProperty("playerStatSummaryType")]
-        [JsonConverter(typeof(PlayerStatsSummaryTypeConverter))]
         public PlayerStatsSummaryType PlayerStatSummaryType { get; set; }
 
         /// <summary>
